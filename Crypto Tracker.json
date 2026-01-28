@@ -1,0 +1,158 @@
+{
+  "name": "Crypto Tracker",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const data = $json;  \nconst workflowData = $getWorkflowStaticData('global');  \n\n// Währungen, die wir checken\nconst coins = [\n  {key: 'bitcoin', symbol: 'BTC', emoji: '🟡'},\n  {key: 'ethereum', symbol: 'ETH', emoji: '🟣'},\n  {key: 'solana', symbol: 'SOL', emoji: '🔵'}\n];\n\nlet message = '🚀 Crypto Price Update\\n'; // Header der Nachricht\n\ncoins.forEach(c => {\n  const current = data[c.key].usd;\n  const prev = workflowData[c.key] || current;\n  workflowData[c.key] = current;\n  // Kompakte Darstellung: nur eine Zahl mit Kürzel\n  message += `${c.emoji} ${c.symbol} = ${current.toFixed(1)} USD\\n`;\n});\n\n// Static Data speichern\n$getWorkflowStaticData('global', workflowData);\n\n// Rückgabe für Telegram/Gmail Node\nreturn [{ json: { text: message } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        -64
+      ],
+      "id": "2d1ce2fe-5a13-4ff0-a310-69451d75a92a",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "chatId": "7199969559",
+        "text": "=={{$json.text}}",
+        "additionalFields": {}
+      },
+      "name": "Send Telegram Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        624,
+        -64
+      ],
+      "id": "704486b5-471f-4a4e-8ecd-fa0e548aaeed",
+      "webhookId": "c78a6a54-0274-49bc-a4b6-22a96cb7ba16",
+      "credentials": {
+        "telegramApi": {
+          "id": "EPNSxt3xBHkZPrbx",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "number": [
+            {
+              "name": "currentPrice",
+              "value": "={{$json['bitcoin']['usd']}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Current Price",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        304,
+        -64
+      ],
+      "id": "4d675d23-1b8d-4f9d-9ebb-2335ec2854de"
+    },
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        }
+      },
+      "name": "Hourly Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        -64
+      ],
+      "id": "f5194de9-a3ed-47a5-b4ee-cc7358a89fba"
+    },
+    {
+      "parameters": {
+        "url": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd",
+        "options": {}
+      },
+      "name": "Get Crypto Prices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        144,
+        -64
+      ],
+      "id": "3045e124-8cce-470d-b2b0-02bb489881da"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Current Price": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hourly Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Crypto Prices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Crypto Prices": {
+      "main": [
+        [
+          {
+            "node": "Set Current Price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Telegram Message": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "0b20528a-67db-4b9c-811d-4f532d374d33",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6f89b73f03fe0d1b7ef1fb545d7c6d70d5dc76a8961ddd153d4a10bb32b1726d"
+  },
+  "id": "2-f-sUCSxzlFqH4SUUxBN",
+  "tags": []
+}
